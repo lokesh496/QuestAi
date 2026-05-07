@@ -99,6 +99,7 @@ export default function App() {
   const [showGenerationDetail, setShowGenerationDetail] = useState(false);
   const [showQCReport, setShowQCReport] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -166,14 +167,30 @@ export default function App() {
       setGenerations([newGen, ...generations]);
       setActiveGeneration(newGen);
       setState('results');
+      setProgress(100);
       setShowGenerationDetail(false);
     } catch (error) {
       console.error(error);
       const msg = error instanceof Error ? error.message : String(error);
       setErrorMessage(msg);
       setState('idle');
+      setProgress(0);
     }
   };
+
+  // progress animation while generating
+  useEffect(() => {
+    let iv: any = null;
+    if (state === 'generating') {
+      setProgress(5);
+      iv = setInterval(() => {
+        setProgress((p) => Math.min(95, p + Math.random() * 10));
+      }, 800);
+    } else {
+      setProgress((s) => (s >= 100 ? 100 : 0));
+    }
+    return () => clearInterval(iv);
+  }, [state]);
 
   const handleLoginSuccess = () => {
     setShowLogin(false);
@@ -389,11 +406,24 @@ export default function App() {
         <main className="flex-1 bg-indigo-50 p-6 md:p-12 overflow-y-auto custom-scrollbar">
           <AnimatePresence mode="wait">
             {errorMessage && (
-              <div className="fixed top-6 right-6 z-50 bg-red-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg">
-                <div className="flex items-center gap-4">
-                  <span>API Error:</span>
-                  <span className="text-sm font-normal">{errorMessage}</span>
-                  <button onClick={() => setErrorMessage(null)} className="ml-4 underline">Dismiss</button>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white text-black max-w-lg w-full p-6 rounded-xl shadow-xl">
+                  <h3 className="text-xl font-black mb-2">Generation failed</h3>
+                  <p className="text-sm text-slate-600 mb-4">{errorMessage}</p>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => setErrorMessage(null)}
+                      className="px-4 py-2 bg-slate-200 rounded-lg font-bold"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => { setErrorMessage(null); handleGenerate(); }}
+                      className="px-4 py-2 bg-fuchsia-500 text-white rounded-lg font-black"
+                    >
+                      Retry
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -449,6 +479,10 @@ export default function App() {
                 </div>
                 <h3 className="mt-12 text-3xl font-black text-black uppercase tracking-tighter">Crafting Reality...</h3>
                 <p className="text-slate-500 font-bold mt-2 uppercase text-xs tracking-widest">Logic Engine Warming Up</p>
+                <div className="w-80 mt-6 bg-slate-200 rounded-full h-3">
+                  <div className="bg-fuchsia-500 h-3 rounded-full" style={{ width: `${progress}%`, transition: 'width 600ms linear' }} />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">{Math.round(progress)}%</p>
               </motion.div>
             )}
 

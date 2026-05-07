@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     if (!apiKey) {
       return res.status(500).json({
         error:
-          "GEMINI_API_KEY is not set. Go to Vercel → Project → Settings → Environment Variables and add it.",
+          "GEMINI_API_KEY is not set. Add it to your deployment environment (Render: Service → Environment → Environment Variables).",
       });
     }
 

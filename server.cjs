@@ -5,9 +5,20 @@ const handler = require('./api/generate.js');
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
+// Basic request logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Mount the existing serverless handler for POST /api/generate
 app.post('/api/generate', (req, res) => {
   return handler(req, res);
+});
+
+// Health check endpoint for deployments
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', time: new Date().toISOString() });
 });
 
 // Serve static frontend from the build output (Vite default: dist)

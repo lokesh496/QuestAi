@@ -98,6 +98,7 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showGenerationDetail, setShowGenerationDetail] = useState(false);
   const [showQCReport, setShowQCReport] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -133,6 +134,7 @@ export default function App() {
       return;
     }
     if (!topic.trim()) return;
+    setErrorMessage(null);
     setState('generating');
     try {
       let results: (CodingQuestion | MCQQuestion)[] = [];
@@ -167,6 +169,8 @@ export default function App() {
       setShowGenerationDetail(false);
     } catch (error) {
       console.error(error);
+      const msg = error instanceof Error ? error.message : String(error);
+      setErrorMessage(msg);
       setState('idle');
     }
   };
@@ -384,6 +388,15 @@ export default function App() {
         {/* Main Workspace */}
         <main className="flex-1 bg-indigo-50 p-6 md:p-12 overflow-y-auto custom-scrollbar">
           <AnimatePresence mode="wait">
+            {errorMessage && (
+              <div className="fixed top-6 right-6 z-50 bg-red-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg">
+                <div className="flex items-center gap-4">
+                  <span>API Error:</span>
+                  <span className="text-sm font-normal">{errorMessage}</span>
+                  <button onClick={() => setErrorMessage(null)} className="ml-4 underline">Dismiss</button>
+                </div>
+              </div>
+            )}
             {state === 'idle' && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}

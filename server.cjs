@@ -3,7 +3,13 @@ const path = require('path');
 const handler = require('./api/generate.js');
 
 const app = express();
-app.use(express.json({ limit: '2mb' }));
+// Capture raw body while still letting express.json parse it (for debugging)
+app.use(express.json({
+  limit: '2mb',
+  verify: (req, res, buf) => {
+    try { req.rawBody = buf.toString(); } catch (e) { req.rawBody = undefined; }
+  }
+}));
 
 // Basic request logging
 app.use((req, res, next) => {
@@ -22,6 +28,8 @@ app.use((err, req, res, next) => {
 
 // Mount the existing serverless handler for POST /api/generate
 app.post('/api/generate', (req, res) => {
+  console.log('[/api/generate] headers:', req.headers);
+  console.log('[/api/generate] rawBody:', typeof req.rawBody === 'string' ? req.rawBody.slice(0,1000) : req.rawBody);
   try {
     return handler(req, res);
   } catch (err) {

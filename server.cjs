@@ -11,9 +11,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// JSON parse error handler
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    console.error('JSON parse error:', err.message);
+    return res.status(400).json({ error: 'Invalid JSON payload' });
+  }
+  next(err);
+});
+
 // Mount the existing serverless handler for POST /api/generate
 app.post('/api/generate', (req, res) => {
-  return handler(req, res);
+  try {
+    return handler(req, res);
+  } catch (err) {
+    console.error('Handler threw:', err && err.stack ? err.stack : err);
+    return res.status(500).json({ error: err && err.message ? err.message : String(err) });
+  }
 });
 
 // Health check endpoint for deployments
